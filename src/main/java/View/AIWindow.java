@@ -16,7 +16,7 @@ import javafx.stage.Stage;
 
 import java.util.ArrayList;
 
-public class AnalysisWindow {
+public class AIWindow {
 
     private AI ai;
     private Game game;
@@ -27,7 +27,7 @@ public class AnalysisWindow {
     private Label averageLabel =new Label("Average:" + '\n');
     private ArrayList<RunStat> runStats = new ArrayList<>();
 
-    public AnalysisWindow(Game game, AI ai, DisplayFx display){
+    public AIWindow(Game game, AI ai, DisplayFx display){
         this.game=game;
         this.ai=ai;
         this.display=display;

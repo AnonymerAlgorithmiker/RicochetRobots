@@ -2,7 +2,6 @@ package View;
 
 import Data.*;
 import Data.Enums.*;
-import Data.GameConfig.Config;
 import Data.Testing.SavedConfigs;
 import Logic.AI;
 import Logic.Game;
@@ -25,17 +24,14 @@ import java.util.Random;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
-/**
- * Created by Martin Eberle aka WillShakesBeer on 14.12.2021.
- */
-
 public class DisplayFx {
 
     //Associated Classes
     private Game game;
     private Logic.AI ai;
     private DisplayUtility utility = new DisplayUtility();
-    private AnalysisWindow anaWindow;
+    private AIWindow aiWindow;
+    private Stage window;
 
     //Ui Declaration
     private ScrollPane movelistScrollPane;
@@ -46,16 +42,19 @@ public class DisplayFx {
     private RadioButton green = new RadioButton("Green ");
     private RadioButton blue = new RadioButton("Blue ");
     private RadioButton yellow = new RadioButton("Yellow ");
+    private HBox colorButtons;
     private Button left = new Button("←");
     private Button up = new Button("↑");
     private Button down = new Button("↓");
     private Button right = new Button("→");
-    private Button analysisButton = new Button("\uD83D\uDCC8");
+    private HBox directionButtons;
+    private Button aiSetupButton = new Button("AI Setup");
+    private Button moveAIButton = new Button("Make AI Move");
+    private Button solveAIButton = new Button("Solve with AI");
+    private Button showKeyBindings = new Button("Show Keybindings");
     private Button revertLastMoveButton = new Button("Revert Last Move");
 
     //Labeldeclaraiton
-    private Label analyisLabel = new Label("Analysis run: ");
-    private Label averageLabel =new Label("Average:" + '\n');
     private Label score = new Label("Score: 0");
     private Label moveScore = new Label ("Moves: ");
     private Label movelist = new Label("Made moves: ");
@@ -72,187 +71,72 @@ public class DisplayFx {
     private ArrayList<MoveCommand> visSeq=new ArrayList<MoveCommand>();
 
 
-    //Stat tracking data
-    private int iterations = 1;
-    private ArrayList<RunConfig> configList = new ArrayList<RunConfig>();
-    private ArrayList<RunStat> runStats = new ArrayList<>();
     private ArrayList<String> moveListlist = new ArrayList<>();
 
-    public DisplayFx (){
+    public DisplayFx (AI ai, Game game, Stage window){
+        this.ai=ai;
+        this.game=game;
+        this.window=window;
+        this.aiWindow=new AIWindow(game,ai,this);
+        playGame();
     }
-
-    /*public void runGame(Stage startWindow ){
-
-        startWindow.setTitle("Choose!");
-
-        Button gameplay = new Button("just play");
-        gameplay.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                playGame(startWindow);
-            }
-        });
-        Button analysis = new Button("analysis");
-        analysis.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                runAnalysis(startWindow);
-            }
-        });
-
-
-        HBox hBoxAllButtons = new HBox(gameplay,analysis);
-        hBoxAllButtons.setPadding(new Insets(10));
-        hBoxAllButtons.setSpacing(110);
-
-        Scene scene = new Scene(hBoxAllButtons, 250, 45);        startWindow.setScene(scene);
-        startWindow.show();
-
-
-        Rectangle2D primScreenBounds = Screen.getPrimary().getVisualBounds();
-        startWindow.setX((primScreenBounds.getWidth() - startWindow.getWidth()) / 2);
-        startWindow.setY((primScreenBounds.getHeight() - startWindow.getHeight()) / 2);
-
-    }*/
-
-    //This Method is used for testing prupose
-    //I dont want to deal with AnalysisScene just yet
-    public void runGame(Stage startWindow){
-        SavedConfigs testConfig= new SavedConfigs();
-        this.game = new Game(testConfig.loadDefaultGameConfig());
-
-        this.ai = new AI(game);
-        ai.setAiDefaults();
-        anaWindow = new AnalysisWindow(game,ai,this);
-        playGame(startWindow);
-    }
-
-
-    //Analysis Area code pls refactor to another class
-    //starts here
-    public void runAnalysis(Stage analysisWindow){
-
-        Scene scene = new Scene(generateAnalysisChooseButton(), 950, 900);
-        generateKeyhandlers(scene);
-        analysisWindow.setScene(scene);
-        analysisWindow.setHeight(1000);
-        analysisWindow.setWidth(1000);
-        analysisWindow.setMaximized(true);
-        analysisWindow.show();
-    }
-
-    public VBox generateAnalysisChooseButton(){
-
-        SavedConfigs testConfig= new SavedConfigs();
-        VBox buttonsAndField = new VBox();
-
-
-        MenuButton algorithmChooseButton = new MenuButton("Choose Algorithm");
-        for ( int i = 0 ; i <= 4 ; i++) {
-
-            MenuItem menuItem = new MenuItem(""+ i);
-            menuItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-                    selectedVicAlgo = Integer.valueOf(menuItem.getText());
-                    ai.setSelectedVicAlgorithm(selectedVicAlgo);
-                }
-            });
-            algorithmChooseButton.getItems().add(menuItem);
-
-        }
-
-        MenuButton analysisChooseButton = new MenuButton("Choose Area");
-        for (Config currentAnalysisConfig : testConfig.loadAnalyseConfigs()) {
-
-            MenuItem menuItem = new MenuItem(currentAnalysisConfig.toString());
-            menuItem.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-
-                    if (buttonsAndField.getChildren().size()>2){
-                        buttonsAndField.getChildren().remove(2);
-                    }
-                    buttonsAndField.getChildren().add(generateSingleAnalysisArea(new Game(currentAnalysisConfig)));
-                }
-            });
-            analysisChooseButton.getItems().add(menuItem);
-
-        }
-
-        Button runAI = new Button("solve");
-        runAI.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                System.out.println("algo: " + selectedVicAlgo + "  Game: " + game + "  State "+ game.getState() + "   Vic: " + game.getState().getBoard().getVictoryPoint());
-                executeNextSequence();
-
-             }
-        });
-
-        HBox allButtons = new HBox(algorithmChooseButton, analysisChooseButton , runAI );
-        buttonsAndField.getChildren().add(allButtons);
-        buttonsAndField.getChildren().add(analysisChooseButton);
-        return buttonsAndField;
-    }
-
-    public HBox generateSingleAnalysisArea(Game game){
-
-        this.game =game;
-        this.ai = new AI(game);
-
-        ai.setSelectedVicAlgorithm(selectedVicAlgo);
-
-        //draw empty board
-        drawEmptyBoard();
-
-        //draw Walls
-        drawObstacles();
-
-        //draw VPs
-        drawVP();
-
-        //draw Robots
-        drawRobots();
-
-        //Grid and listofMoves
-        movelistScrollPane = drawListOfMoves();
-
-        HBox hBoxAllButtons = drawButtons();
-        HBox gridAndMoveList = new HBox(boardGrid , movelistScrollPane);
-        VBox vBoxAll = new VBox(gridAndMoveList, hBoxAllButtons);
-
-        return new HBox(vBoxAll);
-
-    }
-    //analysis code ends here
-
 
     //Main Game
-    public void playGame(Stage gameplayWindow ) {
+    public void playGame() {
 
         //Basic UI Setup
-        gameplayWindow.setTitle("Ricochet Robots");
-        gameplayWindow.setResizable(true);
+        window.setTitle("Ricochet Robots");
+        window.setResizable(true);
 
         drawEmptyBoard();
         drawObstacles();
         drawVP();
         drawRobots();
 
-        movelistScrollPane = drawListOfMoves();
-        HBox gridAndMoveList = new HBox(boardGrid , movelistScrollPane);
-        HBox hBoxAllButtons = drawButtons();
-        VBox vBoxAll = new VBox(gridAndMoveList, hBoxAllButtons);
-        //Scene scene = new Scene(vbox,(int)(Screen.getPrimary().getBounds().getWidth()),(int)(Screen.getPrimary().getBounds().getHeight()));
-        Scene scene = new Scene(vBoxAll, 950, 900);
-
+        Scene scene = createLayout();
         generateKeyhandlers(scene);
 
-        gameplayWindow.setScene(scene);
-        gameplayWindow.show();
+        window.setScene(scene);
+        window.show();
 
-        // analysisButton.fire();
+    }
+
+    //@todo: DarkMode
+    //@todo: Refactor
+    public Scene createLayout(){
+        movelistScrollPane = drawListOfMoves();
+        HBox gridAndMoveList = new HBox(boardGrid , movelistScrollPane);
+        //vBoxAll.setStyle("-fx-background-color: #1d1c21;");
+        drawButtons();
+
+        VBox aiButtons = new VBox(aiSetupButton,moveAIButton,solveAIButton);
+        aiButtons.setAlignment(Pos.BOTTOM_LEFT);
+        HBox aiHButtons = new HBox(aiButtons);
+
+        moveScore.setText("Moves: "+game.getState().getMoveList().size() );
+        VBox revertAndKey = new VBox(revertLastMoveButton,showKeyBindings);
+        HBox revertButtonH = new HBox(revertAndKey);
+
+        HBox scoreH = new HBox(score);
+
+
+        HBox hBoxAllButtons = new HBox(aiHButtons, revertButtonH ,scoreH, colorButtons, directionButtons , moveScore);
+        hBoxAllButtons.setSpacing(50);
+        hBoxAllButtons.setAlignment(Pos.BASELINE_CENTER);
+
+        hBoxAllButtons.setPadding(new Insets(10,0,0,0));
+        VBox vBoxAll = new VBox(gridAndMoveList, hBoxAllButtons);
+        Scene scene = new Scene(vBoxAll, 950, 920);
+        return scene;
+    }
+
+    public void drawButtons(){
+        revertLastMoveButton = drawRevertButton();
+        aiSetupButton = drawAISetupButton();
+        moveAIButton = drawMoveAIButton();
+        solveAIButton = drawSolveWithAiButton();
+        drawColorButtons();
+        drawDirectionButtons();
     }
 
     public void generateKeyhandlers (Scene scene){
@@ -395,38 +279,40 @@ public class DisplayFx {
         return movelistScrollPane;
     }
 
-    public HBox drawButtons(){
-
-        revertLastMoveButton = drawRevertButton();
-        analysisButton = drawAnalysisButton();
-
-        HBox hBoxColor = drawColorButtons();
-        HBox hBoxDirection = drawDirectionButtons();
-
-        moveScore.setText("Moves: "+game.getState().getMoveList().size() );
-
-
-
-        HBox hBoxAllButtons = new HBox(analysisButton, score, revertLastMoveButton , hBoxColor, hBoxDirection , moveScore);
-        hBoxAllButtons.setSpacing(50);
-        hBoxAllButtons.setAlignment(Pos.BASELINE_CENTER);
-
-        return hBoxAllButtons;
-    }
-
-    public Button drawAnalysisButton(){
-        analysisButton.setOnAction(new EventHandler<ActionEvent>() {
+    public Button drawAISetupButton(){
+        aiSetupButton.setOnAction(new EventHandler<ActionEvent>() {
 
 
             @Override
             public void handle(ActionEvent event) {
-                anaWindow.createWindow();
+                aiWindow.createWindow();
             }
         });
 
-        return analysisButton;
+        return aiSetupButton;
     }
 
+    public Button drawMoveAIButton(){
+        moveAIButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                executeNextMove();
+            }
+        });
+
+        return moveAIButton;
+    }
+
+    public Button drawSolveWithAiButton(){
+        solveAIButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                executeNextSequence();
+            }
+        });
+
+        return solveAIButton;
+    }
 
     //Searches for TreeSearch solution if successful visSeq will be refilled
     //otherwise visSeq is emptyList
@@ -444,9 +330,9 @@ public class DisplayFx {
             this.visSeq=new ArrayList<MoveCommand>();
             System.out.println("no result");
             if(ai.isInterrupted()){
-                anaWindow.updateAnalysisLabel(10,0,0,1);
+                aiWindow.updateAnalysisLabel(10,0,0,1);
             }else{
-                anaWindow.updateAnalysisLabel(10,0,1,0);
+                aiWindow.updateAnalysisLabel(10,0,1,0);
             }
             game.forceNewVictoryPoint();
             this.moveListlist = new ArrayList<>();
@@ -465,7 +351,7 @@ public class DisplayFx {
         long timerEnd = System.currentTimeMillis();
         long timeDiff = timerEnd-timerBegin;
         float timeUsed = (float) timeDiff* (float) 0.001;
-        anaWindow.updateAnalysisLabel(timeUsed, movesUsed,0,0);
+        aiWindow.updateAnalysisLabel(timeUsed, movesUsed,0,0);
     }
 
     public void executeNextMove(){
@@ -477,6 +363,104 @@ public class DisplayFx {
             visSeq.remove(curr);
         }
 
+    }
+
+
+    //Visually Moves the Robot, Calls certain redraw Methods
+    public boolean moveRobot(Direction selectedDirection, Colors selectedColor){
+        MoveCommand mCmd = new MoveCommand(selectedColor, selectedDirection);
+        // used to determine if the robot hit a wall  (then returns -1)
+        //clears movelist if victorypoint is reached
+        switch(game.moveRobot(mCmd)){
+            case -1:
+                crashWall =true;
+                break;
+            case 0:
+                crashWall = false;
+                addMovelistEntry(selectedColor,selectedDirection);
+                break;
+            case 1:
+                crashWall=false;
+                this.moveListlist = new ArrayList<>();
+                redrawMovelist();
+                break;
+        }
+        redrawRobots();
+        score.setText("Score: " + game.getState().getScore());
+        return crashWall;
+    }
+
+    public void redrawRobots(){
+        int distanceToVps = (game.getConfig().getHeight()+1) * (game.getConfig().getLength()+1) //all fields
+                + game.getConfig().getObstacleList().size() ;                                      //all obs
+
+        //we delete all robots and VPs redraw them new (less hazzle than to identify which Robot moved this turn)
+        for (int i = 0 ; i <= (game.getState().getBoard().getRobots().size() + game.getState().getBoard().getVictorySpawns().size()  ); i++){
+            boardGrid.getChildren().remove(distanceToVps);
+        }
+        drawRobots();
+        drawVP();
+        moveScore.setText("Moves: "+game.getState().getMoveList().size() );
+
+    }
+
+    public void addMovelistEntry(Colors color, Direction dir){
+        moveListlist.add('\n' + color.toString() + "  "+ "\t" + dir.toString() );
+        redrawMovelist();
+    }
+
+    public void redrawMovelist (){
+        String movelistString = "Made moves: ";
+        for (String move : moveListlist){
+            movelistString = movelistString + move;
+        }
+        movelist.setText(movelistString);
+        //scrolls to the bottom
+        movelistScrollPane.setVvalue(movelistScrollPane.getVmax());
+    }
+
+
+    public void drawColorButtons(){
+        red.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                selectedColor = Colors.RED;
+            }
+        });
+
+
+        green.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                selectedColor = Colors.GREEN;
+            }
+        });
+
+        blue.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                selectedColor = Colors.BLUE;
+            }
+        });
+
+        yellow.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                selectedColor = Colors.YELLOW;
+            }
+        });
+
+
+        selectedColor = Colors.RED;
+        red.setSelected(true);
+
+        ToggleGroup radioGroupColor = new ToggleGroup();
+        red.setToggleGroup(radioGroupColor);
+        green.setToggleGroup(radioGroupColor);
+        blue.setToggleGroup(radioGroupColor);
+        yellow.setToggleGroup(radioGroupColor);
+
+        this.colorButtons = new HBox(red, green, blue, yellow);
     }
 
     public Button drawRevertButton (){
@@ -496,56 +480,8 @@ public class DisplayFx {
         return revertLastMoveButton;
     }
 
-    public HBox drawColorButtons(){
-        red.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedColor = Colors.RED;
-                System.out.println("Selected: " + selectedColor);
-            }
-        });
 
-
-        green.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedColor = Colors.GREEN;
-                System.out.println("Selected: " + selectedColor);
-            }
-        });
-
-        blue.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedColor = Colors.BLUE;
-                System.out.println("Selected: " + selectedColor);
-            }
-        });
-
-        yellow.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedColor = Colors.YELLOW;
-                System.out.println("Selected: " + selectedColor);
-            }
-        });
-
-
-        selectedColor = Colors.RED;
-        red.setSelected(true);
-
-        ToggleGroup radioGroupColor = new ToggleGroup();
-        red.setToggleGroup(radioGroupColor);
-        green.setToggleGroup(radioGroupColor);
-        blue.setToggleGroup(radioGroupColor);
-        yellow.setToggleGroup(radioGroupColor);
-
-        HBox hBoxColor = new HBox(red, green, blue, yellow);
-        hBoxColor.setPadding(new Insets(0, 0, 0, 0));
-        return hBoxColor;
-    }
-
-    public HBox drawDirectionButtons(){
+    public void drawDirectionButtons(){
         left.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
@@ -582,68 +518,11 @@ public class DisplayFx {
         });
 
         VBox upAndDown = new VBox(up,down);
-        HBox hBoxDirection = new HBox(left, upAndDown , right );
-        hBoxDirection.setPadding(new Insets(10, 0, 0, 0));
-        return hBoxDirection;
+        this.directionButtons = new HBox(left, upAndDown , right );
+        this.directionButtons.setAlignment(Pos.BOTTOM_CENTER);
+        this.directionButtons.setPadding(new Insets(20, 0, 0, 0));
 
     }
-
-    //Visually Moves the Robot, Calls certain redraw Methods
-    public boolean moveRobot(Direction selectedDirection, Colors selectedColor){
-        System.out.println("Selected: " + selectedColor + " " + selectedDirection);
-        MoveCommand mCmd = new MoveCommand(selectedColor, selectedDirection);
-        fillMovelist();
-
-        // used to determine if the robot hit a wall  (then returns -1)
-        //clears movelist if victorypoint is reached
-        switch(game.moveRobot(mCmd)){
-            case -1:
-                crashWall =true;
-                break;
-            case 0:
-                crashWall = false;
-                break;
-            case 1:
-                crashWall=false;
-                this.moveListlist = new ArrayList<>();
-                redrawMovelist();
-                break;
-        }
-        redrawRobots();
-        score.setText("Score: " + game.getState().getScore());
-        return crashWall;
-    }
-
-    public void redrawRobots(){
-        int distanceToVps = (game.getConfig().getHeight()+1) * (game.getConfig().getLength()+1) //all fields
-                + game.getConfig().getObstacleList().size() ;                                      //all obs
-
-        //we delete all robots and VPs redraw them new (less hazzle than to identify which Robot moved this turn)
-        for (int i = 0 ; i <= (game.getState().getBoard().getRobots().size() + game.getState().getBoard().getVictorySpawns().size()  ); i++){
-            boardGrid.getChildren().remove(distanceToVps);
-        }
-        drawRobots();
-        drawVP();
-        moveScore.setText("Moves: "+game.getState().getMoveList().size() );
-
-    }
-
-    public void fillMovelist(){
-        moveListlist.add('\n' + selectedColor.toString() + "  "+ "\t" + selectedDirection.toString() );
-        redrawMovelist();
-    }
-
-    public void redrawMovelist (){
-        String movelistString = "Made moves: ";
-        for (String move : moveListlist){
-            movelistString = movelistString + move;
-        }
-        movelist.setText(movelistString);
-        //scrolls to the bottom
-        movelistScrollPane.setVvalue(movelistScrollPane.getVmax());
-    }
-
-
 
     //Getter and Setter madness
     public Colors getSelectedColor() {
