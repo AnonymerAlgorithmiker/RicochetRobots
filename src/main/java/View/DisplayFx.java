@@ -9,6 +9,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -17,6 +18,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.Random;
@@ -69,6 +71,7 @@ public class DisplayFx {
     private int selectedVicAlgo;
     private int setupVicAlgo;
     private ArrayList<MoveCommand> visSeq=new ArrayList<MoveCommand>();
+    Layout layout;
 
 
     private ArrayList<String> moveListlist = new ArrayList<>();
@@ -86,80 +89,26 @@ public class DisplayFx {
 
         //Basic UI Setup
         window.setTitle("Ricochet Robots");
-        window.setResizable(true);
+        //window.setResizable(true);
 
         drawEmptyBoard();
         drawObstacles();
         drawVP();
         drawRobots();
 
-        Scene scene = createLayout();
-        generateKeyhandlers(scene);
+        //Scene scene = createLayout();
+        layout = new Layout(game,this,aiWindow);
+        Scene scene = layout.getLayoutScene();
 
         window.setScene(scene);
+
         window.show();
+        Rectangle2D screenbounds = Screen.getPrimary().getVisualBounds();
+        window.setX((screenbounds.getWidth() - window.getWidth())/2);
+        window.setY((screenbounds.getHeight())/2);
 
     }
 
-    //@todo: DarkMode
-    //@todo: Refactor
-    public Scene createLayout(){
-        movelistScrollPane = drawListOfMoves();
-        HBox gridAndMoveList = new HBox(boardGrid , movelistScrollPane);
-        //vBoxAll.setStyle("-fx-background-color: #1d1c21;");
-        drawButtons();
-
-        VBox aiButtons = new VBox(aiSetupButton,moveAIButton,solveAIButton);
-        aiButtons.setAlignment(Pos.BOTTOM_LEFT);
-        HBox aiHButtons = new HBox(aiButtons);
-
-        moveScore.setText("Moves: "+game.getState().getMoveList().size() );
-        VBox revertAndKey = new VBox(revertLastMoveButton,showKeyBindings);
-        HBox revertButtonH = new HBox(revertAndKey);
-
-        HBox scoreH = new HBox(score);
-
-
-        HBox hBoxAllButtons = new HBox(aiHButtons, revertButtonH ,scoreH, colorButtons, directionButtons , moveScore);
-        hBoxAllButtons.setSpacing(50);
-        hBoxAllButtons.setAlignment(Pos.BASELINE_CENTER);
-
-        hBoxAllButtons.setPadding(new Insets(10,0,0,0));
-        VBox vBoxAll = new VBox(gridAndMoveList, hBoxAllButtons);
-        Scene scene = new Scene(vBoxAll, 950, 920);
-        return scene;
-    }
-
-    public void drawButtons(){
-        revertLastMoveButton = drawRevertButton();
-        aiSetupButton = drawAISetupButton();
-        moveAIButton = drawMoveAIButton();
-        solveAIButton = drawSolveWithAiButton();
-        drawColorButtons();
-        drawDirectionButtons();
-    }
-
-    public void generateKeyhandlers (Scene scene){
-        scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent event) {
-                switch (event.getCode()) {
-                    case W: up.fire(); break;
-                    case A: left.fire(); break;
-                    case S: down.fire(); break;
-                    case D: right.fire(); break;
-                    case DIGIT1: red.fire(); break;
-                    case DIGIT2: green.fire(); break;
-                    case DIGIT3: blue.fire(); break;
-                    case DIGIT4: yellow.fire(); break;
-                    case BACK_SPACE: revertLastMoveButton.fire(); break;
-                    case N: executeNextMove(); break;
-                    case ENTER: executeNextSequence(); break;
-                }
-            }
-        });
-
-    }
 
     public void drawEmptyBoard(){
 
@@ -267,52 +216,6 @@ public class DisplayFx {
         }
     }
 
-    public ScrollPane drawListOfMoves (){
-        ScrollPane movelistScrollPane = new ScrollPane();
-        movelist.setPadding(new Insets(5, 0, 0,0 ));
-        movelistScrollPane.setContent(movelist);
-        movelistScrollPane.setPrefViewportHeight(game.getConfig().getHeight()*50);
-        movelistScrollPane.setPrefViewportWidth(120);
-        //so we stay at the bottom
-        movelistScrollPane.setVvalue(movelistScrollPane.getVmax());
-
-        return movelistScrollPane;
-    }
-
-    public Button drawAISetupButton(){
-        aiSetupButton.setOnAction(new EventHandler<ActionEvent>() {
-
-
-            @Override
-            public void handle(ActionEvent event) {
-                aiWindow.createWindow();
-            }
-        });
-
-        return aiSetupButton;
-    }
-
-    public Button drawMoveAIButton(){
-        moveAIButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                executeNextMove();
-            }
-        });
-
-        return moveAIButton;
-    }
-
-    public Button drawSolveWithAiButton(){
-        solveAIButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                executeNextSequence();
-            }
-        });
-
-        return solveAIButton;
-    }
 
     //Searches for TreeSearch solution if successful visSeq will be refilled
     //otherwise visSeq is emptyList
@@ -322,7 +225,7 @@ public class DisplayFx {
 
         while (!this.visSeq.isEmpty()){
             executeNextMove();
-            redrawMovelist();
+            layout.redrawMovelist();
             redrawRobots();
         }
         this.visSeq=ai.createSeq().getMoveCommands();
@@ -336,12 +239,12 @@ public class DisplayFx {
             }
             game.forceNewVictoryPoint();
             this.moveListlist = new ArrayList<>();
-            redrawMovelist();
+            layout.redrawMovelist();
             redrawRobots();
             return;
         }
         else{
-            redrawMovelist();
+            layout.redrawMovelist();
             redrawRobots();
             System.out.println("Solution found");
             movesUsed = this.visSeq.size();
@@ -377,16 +280,16 @@ public class DisplayFx {
                 break;
             case 0:
                 crashWall = false;
-                addMovelistEntry(selectedColor,selectedDirection);
+                layout.addMovelistEntry(selectedColor,selectedDirection);
                 break;
             case 1:
                 crashWall=false;
-                this.moveListlist = new ArrayList<>();
-                redrawMovelist();
+                layout.setMoveListlist(new ArrayList<>());
+                layout.redrawMovelist();
                 break;
         }
         redrawRobots();
-        score.setText("Score: " + game.getState().getScore());
+        layout.getScore().setText("Score: " + game.getState().getScore());
         return crashWall;
     }
 
@@ -400,127 +303,7 @@ public class DisplayFx {
         }
         drawRobots();
         drawVP();
-        moveScore.setText("Moves: "+game.getState().getMoveList().size() );
-
-    }
-
-    public void addMovelistEntry(Colors color, Direction dir){
-        moveListlist.add('\n' + color.toString() + "  "+ "\t" + dir.toString() );
-        redrawMovelist();
-    }
-
-    public void redrawMovelist (){
-        String movelistString = "Made moves: ";
-        for (String move : moveListlist){
-            movelistString = movelistString + move;
-        }
-        movelist.setText(movelistString);
-        //scrolls to the bottom
-        movelistScrollPane.setVvalue(movelistScrollPane.getVmax());
-    }
-
-
-    public void drawColorButtons(){
-        red.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedColor = Colors.RED;
-            }
-        });
-
-
-        green.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedColor = Colors.GREEN;
-            }
-        });
-
-        blue.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedColor = Colors.BLUE;
-            }
-        });
-
-        yellow.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedColor = Colors.YELLOW;
-            }
-        });
-
-
-        selectedColor = Colors.RED;
-        red.setSelected(true);
-
-        ToggleGroup radioGroupColor = new ToggleGroup();
-        red.setToggleGroup(radioGroupColor);
-        green.setToggleGroup(radioGroupColor);
-        blue.setToggleGroup(radioGroupColor);
-        yellow.setToggleGroup(radioGroupColor);
-
-        this.colorButtons = new HBox(red, green, blue, yellow);
-    }
-
-    public Button drawRevertButton (){
-        revertLastMoveButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                game.revertMove();
-                redrawRobots();
-                if (moveListlist.size() > 0){
-                    moveListlist.remove(moveListlist.size()-1);
-                }
-                redrawMovelist();
-                redrawRobots();
-            }
-        });
-
-        return revertLastMoveButton;
-    }
-
-
-    public void drawDirectionButtons(){
-        left.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedDirection = Direction.LEFT;
-                moveRobot(selectedDirection , selectedColor );
-            }
-        });
-
-        up.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedDirection = Direction.UP;
-                moveRobot(selectedDirection , selectedColor );
-
-            }
-        });
-
-        down.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedDirection = Direction.DOWN;
-                moveRobot(selectedDirection , selectedColor );
-
-            }
-        });
-
-        right.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                selectedDirection = Direction.RIGHT;
-                moveRobot(selectedDirection , selectedColor );
-
-            }
-        });
-
-        VBox upAndDown = new VBox(up,down);
-        this.directionButtons = new HBox(left, upAndDown , right );
-        this.directionButtons.setAlignment(Pos.BOTTOM_CENTER);
-        this.directionButtons.setPadding(new Insets(20, 0, 0, 0));
+        layout.getMoveScore().setText("Moves: "+game.getState().getMoveList().size() );
 
     }
 
@@ -627,5 +410,13 @@ public class DisplayFx {
 
     public void setAi(AI ai) {
         this.ai = ai;
+    }
+
+    public GridPane getBoardGrid() {
+        return boardGrid;
+    }
+
+    public void setBoardGrid(GridPane boardGrid) {
+        this.boardGrid = boardGrid;
     }
 }
