@@ -45,7 +45,6 @@ public class Layout {
 
     private Colors selectedColor;
     private Direction selectedDirection;
-    private boolean crashWall;
     private ArrayList<String> moveListlist = new ArrayList<>();
 
     private Scene LayoutScene;
