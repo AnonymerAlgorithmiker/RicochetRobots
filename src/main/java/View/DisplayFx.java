@@ -44,22 +44,10 @@ public class DisplayFx {
     private RadioButton green = new RadioButton("Green ");
     private RadioButton blue = new RadioButton("Blue ");
     private RadioButton yellow = new RadioButton("Yellow ");
-    private HBox colorButtons;
     private Button left = new Button("←");
     private Button up = new Button("↑");
     private Button down = new Button("↓");
     private Button right = new Button("→");
-    private HBox directionButtons;
-    private Button aiSetupButton = new Button("AI Setup");
-    private Button moveAIButton = new Button("Make AI Move");
-    private Button solveAIButton = new Button("Solve with AI");
-    private Button showKeyBindings = new Button("Show Keybindings");
-    private Button revertLastMoveButton = new Button("Revert Last Move");
-
-    //Labeldeclaraiton
-    private Label score = new Label("Score: 0");
-    private Label moveScore = new Label ("Moves: ");
-    private Label movelist = new Label("Made moves: ");
 
 
     //Data
@@ -68,20 +56,17 @@ public class DisplayFx {
     private Colors selectedColor;
     private Direction selectedDirection;
     private boolean crashWall;
-    private int selectedVicAlgo;
-    private int setupVicAlgo;
     private ArrayList<MoveCommand> visSeq=new ArrayList<MoveCommand>();
     Layout layout;
 
 
-    private ArrayList<String> moveListlist = new ArrayList<>();
+    private ArrayList<String> moveListlist = new ArrayList<String>();
 
     public DisplayFx (AI ai, Game game, Stage window){
         this.ai=ai;
         this.game=game;
         this.window=window;
         this.aiWindow=new AIWindow(game,ai,this);
-        playGame();
     }
 
     //Main Game

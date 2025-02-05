@@ -22,22 +22,12 @@ public class RunDis extends Application {
 
 
     public void start(final Stage startWindow){
-        //DisplayFx displayFx = new DisplayFx();
-        //displayFx.runGame(startWindow);
         SavedConfigs testConfig= new SavedConfigs();
         Game game = new Game(testConfig.loadDefaultGameConfig());
         AI ai = new AI(game);
         ai.setAiDefaults();
         DisplayFx displayFx = new DisplayFx(ai,game,startWindow);
+        displayFx.playGame();
     }
-
-    /*public void runGame(Stage startWindow){
-        this.game = new Game(testConfig.loadDefaultGameConfig());
-
-        this.ai = new AI(game);
-        ai.setAiDefaults();
-        aiWindow = new AIWindow(game,ai,this);
-        playGame(startWindow);
-    }*/
 
 }

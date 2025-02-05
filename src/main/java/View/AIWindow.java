@@ -38,8 +38,8 @@ public class AIWindow {
 
         Stage analysisWindow = new Stage();
 
-        HBox hBoxAlgorithms = drawAlgorithmSelecter();
-        HBox hBoxSetupAlgorithms = drawSetupAlgorithmSelecter();
+        HBox hBoxAlgorithms = drawAlgorithmSelector();
+        HBox hBoxSetupAlgorithms = drawSetupSelector();
         HBox hBoxLimits = drawLimitsSelecter();
         ScrollPane analysisTextScrollPane = drawAnalysisScrollPane();
 
@@ -59,139 +59,49 @@ public class AIWindow {
     }
 
 
-    public HBox drawSetupAlgorithmSelecter(){
 
-        RadioButton s1 = new RadioButton("Depth First Search");
-        RadioButton s2 = new RadioButton("Random First Search");
-        RadioButton s3 = new RadioButton("Breadth First Search");
-        RadioButton s4 = new RadioButton("Position Score");
-        RadioButton s5 = new RadioButton("Cross Block Score");
+    public HBox drawSetupSelector(){
+        ComboBox<String> setupSel = new ComboBox<String>();
+        setupSel.getItems().add("Depth First Search");
+        setupSel.getItems().add("Random First Search");
+        setupSel.getItems().add("Breadth First Search");
+        setupSel.getItems().add("Position Score");
+        setupSel.getItems().add("Cross Block Score");
 
-        // create a toggle group
-        ToggleGroup sg = new ToggleGroup();
-        s1.setToggleGroup(sg);
-        s2.setToggleGroup(sg);
-        s3.setToggleGroup(sg);
-        s4.setToggleGroup(sg);
-        s5.setToggleGroup(sg);
-        s1.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedSetupHeuristic(0);
-            }
-        });
-        s2.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedSetupHeuristic(1);
-            }
-        });
-        s3.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedSetupHeuristic(2);
-            }
-        });
-        s4.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedSetupHeuristic(3);
-            }
-        });
-        s5.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedSetupHeuristic(4);
-            }
-        });
+        setupSel.setOnAction((event) -> {
+            int selectedIndex = setupSel.getSelectionModel().getSelectedIndex();
+            ai.setSelectedSetupHeuristic(selectedIndex);
 
-        s1.setSelected(true);
-        HBox setupAlgorithms = new HBox(s1,s2,s3,s4,s5);
-        setupAlgorithms.setSpacing(10);
-        return setupAlgorithms;
+        });
+        setupSel.getSelectionModel().select("Cross Block Score");
+
+        Label setupLabel = new Label("Select Setup Heuristic");
+        HBox setupSelHBox = new HBox(setupLabel,setupSel);
+        setupSelHBox.setSpacing(20);
+        return setupSelHBox;
     }
 
+    public HBox drawAlgorithmSelector(){
+        ComboBox<String> algoSel = new ComboBox<String>();
+        algoSel.getItems().add("Depth First Search");
+        algoSel.getItems().add("Random First Search");
+        algoSel.getItems().add("Breadth First Search");
+        algoSel.getItems().add("Air First Search");
+        algoSel.getItems().add("Breadth First Search preloaded Setups");
+        algoSel.getItems().add("Generic BSearch");
+        algoSel.getItems().add("Generic DSearch");
 
-    public HBox drawAlgorithmSelecter(){
-        //Algorithm=0
-        //Uses Depth limited Depth first search
-        //Algorithm=1
-        //Uses Depth limited random first search
-        //Algorithm=2
-        //Uses Depth limited breadth first search
-        RadioButton v1 = new RadioButton("Depth First Search");
-        RadioButton v2 = new RadioButton("Random First Search");
-        RadioButton v3 = new RadioButton("Breadth First Search");
-        RadioButton v4 = new RadioButton("Air First Search");
-        RadioButton v5 = new RadioButton("Breadth First Search preloaded Setups");
-        RadioButton v6 = new RadioButton("Generic BSearch");
-        RadioButton v7 = new RadioButton("Generic DSearch");
+        algoSel.setOnAction((event) -> {
+            int selectedIndex = algoSel.getSelectionModel().getSelectedIndex();
+            ai.setSelectedVicAlgorithm(selectedIndex);
 
-        // create a toggle group
-        ToggleGroup vg = new ToggleGroup();
-        v1.setToggleGroup(vg);
-        v2.setToggleGroup(vg);
-        v3.setToggleGroup(vg);
-        v4.setToggleGroup(vg);
-        v5.setToggleGroup(vg);
-        v6.setToggleGroup(vg);
-        v7.setToggleGroup(vg);
+        });
+        algoSel.getSelectionModel().select("Breadth First Search preloaded Setups");
 
-
-        v1.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedVicAlgorithm(0);
-            }
-        });
-        //Algorithm=0
-        //Uses Depth limited Depth first search
-        v2.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedVicAlgorithm(1);
-            }
-        });
-        //Algorithm=1
-        //Uses Depth limited random first search
-        v3.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedVicAlgorithm(2);
-            }
-        });
-        //Algorithm=2
-        //Uses Depth limited breadth first search
-        v4.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedVicAlgorithm(3);
-            }
-        });
-        v5.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedVicAlgorithm(4);
-            }
-        });
-        v6.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedVicAlgorithm(5);
-            }
-        });
-        v7.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent e) {
-                ai.setSelectedVicAlgorithm(6);
-            }
-        });
-        v1.setSelected(true);
-        HBox vicAlgorithms = new HBox(v1,v2,v3,v4,v5,v6,v7);
-        vicAlgorithms.setSpacing(10);
-
-
-        return vicAlgorithms;
+        Label algLabel = new Label("Select Algorithm: ");
+        HBox algSelHBox = new HBox(algLabel,algoSel);
+        algSelHBox.setSpacing(20);
+        return algSelHBox;
     }
 
 

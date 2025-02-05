@@ -13,6 +13,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import java.util.ArrayList;
 
@@ -91,6 +92,7 @@ public class Layout {
         solveAIButton = drawSolveWithAiButton();
         drawColorButtons();
         drawDirectionButtons();
+        drawKeyBindingsButton();
     }
 
     public void drawColorButtons(){
@@ -231,6 +233,16 @@ public class Layout {
         return solveAIButton;
     }
 
+    public Button drawKeyBindingsButton(){
+        showKeyBindings.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+               createKeyBindWindow();
+            }
+        });
+
+        return moveAIButton;
+    }
     public void generateKeyhandlers (){
         LayoutScene.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
@@ -279,6 +291,41 @@ public class Layout {
         movelist.setText(movelistString);
         //scrolls to the bottom
         movelistScrollPane.setVvalue(movelistScrollPane.getVmax());
+    }
+
+    public void createKeyBindWindow(){
+        Stage keyWin = new Stage();
+
+        Label wLabel = new Label("W: Up");
+        Label sLabel = new Label("S: Down");
+        Label aLabel = new Label("A: Left");
+        Label dLabel = new Label("D: Right");
+
+        Label oneLabel = new Label("1: Select Red");
+        Label twoLabel = new Label("2: Select Green");
+        Label threeLabel = new Label("3: Select Blue");
+        Label fourLabel = new Label("4: Select Yellow");
+
+        Label revertLabel = new Label("Backspace: Revert Last Move");
+        Label aiMoveLabel = new Label("N: Execute Next AI Move");
+        Label aiSeqLabel = new Label("Enter: Solve with AI");
+
+        VBox actionBox = new VBox(revertLabel,aiMoveLabel,aiSeqLabel);
+        actionBox.setSpacing(10);
+        VBox wasdBox = new VBox(wLabel,sLabel,aLabel,dLabel);
+        wasdBox.setSpacing(10);
+        VBox colorBox = new VBox(oneLabel, twoLabel,threeLabel,fourLabel);
+        colorBox.setSpacing(10);
+        HBox topBox = new HBox(wasdBox,colorBox,actionBox);
+        topBox.setPadding(new Insets(10,10,10,10));
+        topBox.setSpacing(30);
+        Scene scene = new Scene(topBox);
+
+        keyWin.setTitle("Keybindings");
+        keyWin.setScene(scene);
+        keyWin.setX(100);
+        keyWin.setY(300);
+        keyWin.show();
     }
 
     public Scene getLayoutScene() {
